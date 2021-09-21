@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name" translatable="false">Contatinhos</string>
+    <string name="nome">Nome</string>
+    <string name="ctd_add_btn">Botão adicionar contato</string>
+</resources>
