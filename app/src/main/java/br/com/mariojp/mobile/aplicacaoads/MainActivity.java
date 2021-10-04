@@ -1,8 +1,19 @@
 package br.com.mariojp.mobile.aplicacaoads;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -16,9 +27,11 @@ import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import br.com.mariojp.mobile.aplicacaoads.adapter.ContatoAdapter;
+import br.com.mariojp.mobile.aplicacaoads.adapter.CustomAdapter;
 import br.com.mariojp.mobile.aplicacaoads.model.Contato;
 import br.com.mariojp.mobile.aplicacaoads.model.GerenciadorContatos;
 
@@ -39,37 +52,66 @@ public class MainActivity extends AppCompatActivity {
     //KOTLIN
 
     private FloatingActionButton adicionar;
-    private ListView listView;
-    private final List<Contato> dados = GerenciadorContatos.listaContatos();
-    private ContatoAdapter adapter;
+    private RecyclerView listView;
+    private List<Contato> dados;
+    private CustomAdapter adapter;
+    private CustomAdapter adapter2;
+    private ActivityResultLauncher<Intent> contatoActivityResultLauncher;
+
+
+    public static final int CONTACT_REQUEST = 999;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //dados = GerenciadorContatos.listaContatos();
+        dados = new ArrayList<Contato>();
+
+        contatoActivityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        Intent data = result.getData();
+                        contatoActivityResult(data);
+                    }
+                });
+
         listView = findViewById(R.id.main_list_contatos);
+        RecyclerView listView2 = findViewById(R.id.main_list_contatos2);
         adicionar = findViewById(R.id.main_fab_adicionar);
         Log.d("AppADS","AppADS onCreate");
-        adapter = new ContatoAdapter(this,dados);
+        adapter = new CustomAdapter(dados);
         listView.setAdapter(adapter);
+        listView.setLayoutManager(new StaggeredGridLayoutManager(2,RecyclerView.HORIZONTAL));
+
+        adapter2 = new CustomAdapter(dados);
+        listView2.setAdapter(adapter2);
+        listView2.setLayoutManager(new StaggeredGridLayoutManager(2,RecyclerView.HORIZONTAL));
         //Evento -> Click
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Contato contato = (Contato) parent.getItemAtPosition(position);
-                Toast.makeText(MainActivity.this,contato.toString(), Toast.LENGTH_LONG ).show();
-            }
-        });
-
-
-        //Evento -> Click longo
-        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                Contato contato = (Contato) parent.getItemAtPosition(position);
-                excluiContato(contato);
-                return true;
-            }
-        });
+//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//                Contato contato = (Contato) parent.getItemAtPosition(position);
+//                Intent intent = new Intent(Intent.ACTION_DIAL);
+//                intent.setData(Uri.parse("tel:" + contato.getTelefone()));
+//                if (intent.resolveActivity(getPackageManager()) != null) {
+//                    startActivity(intent);
+//                }
+//
+//            }
+//        });
+//
+//
+//        //Evento -> Click longo
+//        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+//            @Override
+//            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+//                Contato contato = (Contato) parent.getItemAtPosition(position);
+//                excluiContato(contato);
+//                return true;
+//            }
+//        });
 
     }
 
@@ -83,9 +125,34 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void actionAdicionar(View v ){
-        dados.add(new Contato("Marcos", "1111111", "marcos@email"));
-        adapter.notifyDataSetChanged();
+        Intent intent = new Intent(this, ContatoActivity.class);
+        //startActivityForResult(intent,CONTACT_REQUEST);
+        contatoActivityResultLauncher.launch(intent);
+//        dados.add(new Contato("Marcos", "1111111", "marcos@email"));
+//        adapter.notifyDataSetChanged();
     }
+
+    protected void contatoActivityResult(Intent data) {
+        Contato contato = (Contato) data.getSerializableExtra(Contato.CONTATO);
+        dados.add(contato);
+        adapter.notifyDataSetChanged();
+        adapter2.notifyDataSetChanged();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == CONTACT_REQUEST) {
+            if(resultCode == RESULT_OK){
+                Contato contato = (Contato) data.getSerializableExtra(Contato.CONTATO);
+                dados.add(contato);
+                adapter.notifyDataSetChanged();
+                adapter2.notifyDataSetChanged();
+            }
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

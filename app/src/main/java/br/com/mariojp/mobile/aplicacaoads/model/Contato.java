@@ -1,16 +1,22 @@
 package br.com.mariojp.mobile.aplicacaoads.model;
 
-public class Contato {
+import java.io.Serializable;
+
+public class Contato implements Serializable {
+
+    public final static String CONTATO = "CONTATO";
 
     private String nome;
     private String telefone;
     private String email;
+    private Integer nota;
 
 
-    public Contato(String nome, String telefone, String email) {
+    public Contato(String nome, String telefone, String email, Integer nota) {
         this.nome = nome;
         this.telefone = telefone;
         this.email = email;
+        this.nota = nota;
     }
 
     public String getNome() {
@@ -44,5 +50,13 @@ public class Contato {
                 ", telefone='" + telefone + '\'' +
                 ", email='" + email + '\'' +
                 '}';
+    }
+
+    public Integer getNota() {
+        return nota;
+    }
+
+    public void setNota(Integer nota) {
+        this.nota = nota;
     }
 }

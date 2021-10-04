@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AplicacaoADS">
         <activity
-            android:name=".contatoActivity"
+            android:name=".ContatoActivity"
             android:exported="true" />
         <activity
             android:name=".MainActivity"
