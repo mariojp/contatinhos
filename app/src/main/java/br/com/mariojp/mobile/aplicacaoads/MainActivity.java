@@ -6,13 +6,18 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
+import androidx.room.Room;
+import androidx.room.RoomDatabase;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -34,6 +39,9 @@ import br.com.mariojp.mobile.aplicacaoads.adapter.ContatoAdapter;
 import br.com.mariojp.mobile.aplicacaoads.adapter.CustomAdapter;
 import br.com.mariojp.mobile.aplicacaoads.model.Contato;
 import br.com.mariojp.mobile.aplicacaoads.model.GerenciadorContatos;
+import br.com.mariojp.mobile.aplicacaoads.persistencia.BancoDados;
+import br.com.mariojp.mobile.aplicacaoads.persistencia.BancoDadosRoom;
+import br.com.mariojp.mobile.aplicacaoads.persistencia.ContatoDAO;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -49,24 +57,43 @@ public class MainActivity extends AppCompatActivity {
     //TODO: CONSUMIR UM SERVIÇO CEP
     //TODO: ENDERECO
 
-    //KOTLIN
 
     private FloatingActionButton adicionar;
     private RecyclerView listView;
-    private List<Contato> dados;
+    private List<Contato> dados =new ArrayList<>();
     private CustomAdapter adapter;
-    private CustomAdapter adapter2;
+
+    private ContatoViewModel contatoViewModel;
+
+
     private ActivityResultLauncher<Intent> contatoActivityResultLauncher;
 
-
+    BancoDadosRoom room;
     public static final int CONTACT_REQUEST = 999;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //dados = GerenciadorContatos.listaContatos();
-        dados = new ArrayList<Contato>();
+
+//        BancoDados banco = new BancoDados(this);
+//         dao = new ContatoDAO(banco);
+
+
+        //BancoDadosRoom.getInstancia(this).contatoRoomDAO().insert(new Contato("NOme","telefone","email@email",2));
+
+        Repository repository = new Repository(BancoDadosRoom.getInstancia(this).contatoRoomDAO());
+        ContatoModelFactory fabrica = new ContatoModelFactory(repository);
+        ViewModelProvider provider = new ViewModelProvider(this,fabrica);
+        contatoViewModel = provider.get(ContatoViewModel.class);
+
+        listView = findViewById(R.id.main_list_contatos);
+        adapter = new CustomAdapter(dados);
+        listView.setAdapter(adapter);
+        listView.setLayoutManager(new LinearLayoutManager(this));
+
+        contatoViewModel.getContatos().observe(this, list -> adapter.update(list));
+
 
         contatoActivityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -77,41 +104,11 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-        listView = findViewById(R.id.main_list_contatos);
-        RecyclerView listView2 = findViewById(R.id.main_list_contatos2);
         adicionar = findViewById(R.id.main_fab_adicionar);
         Log.d("AppADS","AppADS onCreate");
-        adapter = new CustomAdapter(dados);
-        listView.setAdapter(adapter);
-        listView.setLayoutManager(new StaggeredGridLayoutManager(2,RecyclerView.HORIZONTAL));
 
-        adapter2 = new CustomAdapter(dados);
-        listView2.setAdapter(adapter2);
-        listView2.setLayoutManager(new StaggeredGridLayoutManager(2,RecyclerView.HORIZONTAL));
-        //Evento -> Click
-//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                Contato contato = (Contato) parent.getItemAtPosition(position);
-//                Intent intent = new Intent(Intent.ACTION_DIAL);
-//                intent.setData(Uri.parse("tel:" + contato.getTelefone()));
-//                if (intent.resolveActivity(getPackageManager()) != null) {
-//                    startActivity(intent);
-//                }
-//
-//            }
-//        });
-//
-//
-//        //Evento -> Click longo
-//        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-//            @Override
-//            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-//                Contato contato = (Contato) parent.getItemAtPosition(position);
-//                excluiContato(contato);
-//                return true;
-//            }
-//        });
+
+
 
     }
 
@@ -134,9 +131,10 @@ public class MainActivity extends AppCompatActivity {
 
     protected void contatoActivityResult(Intent data) {
         Contato contato = (Contato) data.getSerializableExtra(Contato.CONTATO);
-        dados.add(contato);
+        room.contatoRoomDAO().insert(contato);
+        dados.clear();
+        dados.addAll(room.contatoRoomDAO().listAll());
         adapter.notifyDataSetChanged();
-        adapter2.notifyDataSetChanged();
     }
 
     @Override
@@ -146,7 +144,6 @@ public class MainActivity extends AppCompatActivity {
                 Contato contato = (Contato) data.getSerializableExtra(Contato.CONTATO);
                 dados.add(contato);
                 adapter.notifyDataSetChanged();
-                adapter2.notifyDataSetChanged();
             }
         }
 

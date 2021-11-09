@@ -42,6 +42,13 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
         return dados.size();
     }
 
+    public void update(List<Contato> list) {
+        notifyItemRangeRemoved(0,list.size());
+        this.dados.clear();
+        this.dados.addAll(list);
+        notifyItemRangeInserted(0,list.size());
+    }
+
     class ViewHolder extends RecyclerView.ViewHolder {
 
         private TextView tvNome;
