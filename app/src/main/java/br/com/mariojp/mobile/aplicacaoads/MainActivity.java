@@ -31,17 +31,22 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import br.com.mariojp.mobile.aplicacaoads.adapter.ContatoAdapter;
 import br.com.mariojp.mobile.aplicacaoads.adapter.CustomAdapter;
+import br.com.mariojp.mobile.aplicacaoads.api.Servico;
 import br.com.mariojp.mobile.aplicacaoads.model.Contato;
 import br.com.mariojp.mobile.aplicacaoads.model.GerenciadorContatos;
 import br.com.mariojp.mobile.aplicacaoads.persistencia.BancoDados;
 import br.com.mariojp.mobile.aplicacaoads.persistencia.BancoDadosRoom;
 import br.com.mariojp.mobile.aplicacaoads.persistencia.ContatoDAO;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -75,6 +80,25 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+//        Call<List<Contato>> listCall = Servico.getInstacia().getWebService().todosContatos();
+//
+//        listCall.enqueue(new Callback<List<Contato>>() {
+//            @Override
+//            public void onResponse(Call<List<Contato>> call, Response<List<Contato>> response) {
+//                List<Contato> contatos = response.body();
+//            }
+//
+//            @Override
+//            public void onFailure(Call<List<Contato>> call, Throwable t) {
+//
+//            }
+//        });
+        Gson gson = new Gson();
+
+        String json =gson.toJson(GerenciadorContatos.listaContatos())
+        ;
+        System.out.println(json);
 
 //        BancoDados banco = new BancoDados(this);
 //         dao = new ContatoDAO(banco);
